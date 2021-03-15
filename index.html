@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>配置订单详情</title>
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css">
+  <script src="https://unpkg.com/art-template@4.13.2/lib/template-web.js"></script>
+  <style>
+    body {
+      font-family: Microsoft YaHei, Tahoma, arial, helvetica, sans-serif;
+      padding: 20px;
+    }
+
+    .form-group {
+      padding: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <h2 style="font-family: Microsoft YaHei;text-align: center;">配置订单详情</h2>
+        <form id="form_id" class="navbar-form navbar-left" role="search">
+          <div id="addForm">
+            <!-- todo -->
+          </div>
+          <div>
+            <input type="reset" class="btn btn-default" value="重置" />
+            <button id="submitAdd" type="submit" class="btn btn-default">提交</button>
+          </div>
+        </form>
+        <h3 id="error-message">订单详情页面错误，请联系管理员</h3>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <script type="text/html" id="resultTpl">
+    <div class="form-group input-group col-md-12">
+      <span class="input-group-addon">涨幅</span>
+      <input type="text" class="form-control" value="{{data.Up}}" name="Up">
+    </div>
+
+    <div class="form-group input-group col-md-12">
+      <span class="input-group-addon">跌幅</span>
+      <input type="text" class="form-control" value="{{data.Stop}}" name="Stop">
+    </div>
+
+    <div class="form-group input-group col-md-12">
+      <span class="input-group-addon">交易开始时间</span>
+      <input type="text" class="form-control" value="{{data.PayTime}}" name="PayTime">
+    </div>
+
+    <div class="form-group input-group col-md-12">
+      <span class="input-group-addon">是否设置止损（1设置，其他不设置)</span>
+      <input type="text" class="form-control" value="{{data.Isstop}}" name="Isstop">
+    </div>
+
+    <div class="form-group input-group col-md-12">
+      <span class="input-group-addon">是否设置止盈（1设置，其他不设置)</span>
+      <input type="text" class="form-control" value="{{data.IsUp}}" name="IsUp">
+    </div>
+
+    <div class="form-group input-group col-md-12">
+      <span class="input-group-addon">单笔购买金额</span>
+      <input type="text" class="form-control" value="{{data.Price}}" name="Price">
+    </div>
+    <div class="form-group input-group col-md-12">
+      <span class="input-group-addon">购买时限制的最大涨幅</span>
+      <input type="text" class="form-control" value="{{data.Defaultup}}" name="Defaultup">
+    </div>
+
+    <div class="form-group input-group col-md-12">
+      <span class="input-group-addon">购买时限制的最小涨幅</span>
+      <input type="text" class="form-control" value="{{data.Defaultstop}}" name="Defaultstop">
+    </div>
+    <div class="form-group input-group col-md-12">
+      <span class="input-group-addon">购买的单数</span>
+      <input type="text" class="form-control" value="{{data.Count}}" name="Count">
+    </div>
+	</script>
+
+  <script>
+    // clone到本地后需要修改url地址
+    var urlGet = '127.0.0.1:8081/baseconf/config'
+    var urlPost = '127.0.0.1:8081/baseconf/orderconfig'
+    // 页面加载后展示数据
+    window.onload = function () {
+      $.ajax({
+        type: 'get',
+        url: urlGet,
+        contentType: 'application/json',
+        success: function (data) {
+          $('#form_id').css("display", "block")
+          $('#error-message').css("display", "none")
+
+          dataToHtml(data.data)
+        },
+        error: function () {
+          $('#form_id').css("display", "none")
+          $('#error-message').css("display", "block")
+        }
+      })
+
+      function dataToHtml(data) {
+        //template 处理返回数据
+        var resulthtml = template('resultTpl', { data: data.OrderConfig })
+        $('#addForm').append(resulthtml)
+      }
+    }
+    // 提交表单
+    $("#submitAdd").click(function () {
+      var data = $("#form_id").serialize()
+
+      $.ajax({
+        type: 'POST',
+        url: urlPost,
+        cache: false,
+        data: data,
+        dataType: 'json',
+        success: function (data) {
+          console.info('提交成功')
+        },
+        error: function () {
+          console.info('提交失败')
+        }
+      })
+    })
+  </script>
+</body>
+
+</html>
