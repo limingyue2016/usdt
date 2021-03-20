@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>订单实时盈亏</title>
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css">
+  <script src="https://unpkg.com/art-template@4.13.2/lib/template-web.js"></script>
+  <style>
+    body {
+      font-family: Microsoft YaHei, Tahoma, arial, helvetica, sans-serif;
+      padding: 20px
+    }
+
+    thead tr {
+      font-weight: bold;
+      font-size: 14px;
+      background-color: #dff0d8
+    }
+
+    tbody tr {
+      background-color: #fcf8e3
+    }
+
+    th,
+    td {
+      text-align: center
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <h2 style="font-family: Microsoft YaHei;text-align: center;">订单实时盈亏</h2>
+        <table class="table text-center table-hover">
+          <thead>
+            <tr>
+              <th>币种</th>
+              <th>购买金额</th>
+              <th>盈亏比例</th>
+              <th>实时变动金额</th>
+              <th>市价平仓按钮</th>
+              <th>现价平仓按钮</th>
+            </tr>
+          </thead>
+          <tbody id="profit_loss_list">
+
+          </tbody>
+        </table>
+        <h3 id="error-message" style="display: none">与服务器连接错误，请联系管理员</h3>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <script type="text/html" id="resultTpl">
+    {{ each list item }}
+  <tr>
+    <td>{{ item.Response.Data.symbol }}</td>
+    <td>{{ item.Response.Data.orderValue }}</td>
+    <td>{{ item.Pl }}</td>
+    <td>{{ item.Sell }}</td>
+    <td><button type="button" class="btn btn-primary" 
+      data-symbol="{{ item.Response.Data.symbol }}" data-type="{{ item.Response.Data.type }}" data-amount="{{ item.Amount }}"  data-price="{{ item.Price }}">市价平仓按钮</button></td>
+    <td><button type="button" class="btn btn-primary" 
+      data-symbol="{{ item.Response.Data.symbol }}" data-type="{{ item.Response.Data.type }}"  data-amount="{{ item.Amount }}"  data-price="{{ item.Price }}">现价平仓按钮</button></td>
+  </tr>
+  {{ /each }}
+  </script>
+
+  <script>
+    // clone到本地后需要修改ws地址
+    var wsGet = 'ws://127.0.0.1:7000/ws'
+    // 创建链接
+    var ws = new WebSocket(wsGet)
+
+    // 建立连接后的回调函数
+    ws.onopen = function (event) {
+      if (ws.readyState == 1) {
+        $('#error-message').css("display", "none")
+
+        // 收到服务端消息的回调函数
+        ws.onmessage = function (data) {
+          var orderData = JSON.parse(data.data)
+
+          dataToHtml(orderData)
+          bindButton()
+        }
+      } else {
+        console.info('error')
+        $('#profit_loss_list').css("display", "none")
+        $('#error-message').css("display", "block")
+      }
+    }
+
+    //template 处理返回数据
+    function dataToHtml(data) {
+      var resulthtml = template('resultTpl', { list: data })
+      $('#profit_loss_list').empty()
+      $('#profit_loss_list').append(resulthtml)
+    }
+
+    // 公共ajax交互函数
+    function updateHandle(obj) {
+      $.ajax({
+        type: 'post',
+        url: 'http://8.211.170.201:8081/order/place',
+        data: obj,
+        dataType: "json",
+        success: function (data) {
+          console.log(data)
+        },
+        error: function () {
+          alert('平仓操作异常')
+        }
+      })
+    }
+    // 发送平仓请求
+    function bindButton() {
+      $('button').each(function () {
+        $(this).click(function () {
+          var $symbol = $(this).attr('data-symbol')
+          var $type = $(this).attr('data-type')
+          var $amount = $(this).attr('data-amount')
+          var $price = $(this).attr('data-price')
+
+          updateHandle({
+            'symbol': $symbol,
+            'type': $type,
+            'amount': $amount,
+            'price': $price
+          })
+        })
+      })
+    }
+  </script>
+</body>
+
+</html>
